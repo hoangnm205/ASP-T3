@@ -1,5 +1,5 @@
 ﻿using ASP_T3.Entities;
-
+using System.Text.Json.Serialization;
 namespace ASP_T3;
 
 public class Program
@@ -8,7 +8,9 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(x =>
+            x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
         var app = builder.Build();
 

@@ -1,12 +1,21 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace ASP_T3.Entities
 {
+	[Table("tblUsers")]
 	public class User
 	{
+		[Key]
 		public int Id { get; set; }
 		public string Name { get; set; }
 		public string Email { get; set; }
-		public string Password { get; set; }
+
+        [MinLength(6)]
+        public string Password { get; set; }
+
+        public List<Blog> Blogs { get; } = new();
 
 		public User()
 		{

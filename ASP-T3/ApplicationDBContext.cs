@@ -15,6 +15,7 @@ namespace ASP_T3
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Blog> Blogs { get; set; }
     }
 }
 

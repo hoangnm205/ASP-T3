@@ -1,6 +1,7 @@
 ﻿using System;
 using ASP_T3.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASP_T3.Controllers
 {
@@ -66,9 +67,20 @@ namespace ASP_T3.Controllers
 		public User? FindById(int id)
 		{
             using var context = new ApplicationDBContext();
-            return (from u in context.Users
+            var user = (from u in context.Users.Include("Blogs")
                     where u.Id == id
                     select u).FirstOrDefault();
+
+
+            //foreach (var b in user.Blogs)
+            //{
+            //    Console.WriteLine(b.Title);
+            //}
+
+            //user.Blogs.Add(new Blog("test", "test", user.Id, user));
+            //context.SaveChanges();
+
+            return user;
         }
     }
 }
