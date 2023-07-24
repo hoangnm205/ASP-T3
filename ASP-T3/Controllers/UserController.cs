@@ -1,7 +1,16 @@
 ﻿using System;
 using ASP_T3.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+
+
+using System.Text;
 
 namespace ASP_T3.Controllers
 {
@@ -64,7 +73,7 @@ namespace ASP_T3.Controllers
         }
 
         [HttpGet("{id}")]
-		public User? FindById(int id)
+		public Object FindById(int id)
 		{
             using var context = new ApplicationDBContext();
             var user = (from u in context.Users.Include("Blogs")
@@ -80,7 +89,79 @@ namespace ASP_T3.Controllers
             //user.Blogs.Add(new Blog("test", "test", user.Id, user));
             //context.SaveChanges();
 
-            return user;
+            string token = CreateToken(user);
+            JwtSecurityToken jwtSecurityToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            Console.WriteLine(jwtSecurityToken);
+            var a = VerifyJwt(token);
+            Console.WriteLine(a);
+            return new { Token = token, Verify = a };
+        }
+
+        private string CreateToken(User user) //JWT
+        {
+
+            // 1. Tao key để thực hiện ký trên jwt
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Secret key abc1123 npcent"));
+
+            // 2. List claims --> chính là phần payload
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim("UID", user.Id.ToString()),
+                new Claim("Email", user.Email),
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim("host", "https://npcetc.com.vn"),
+            };
+
+            // 3. Tạo chữ ký
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            // 4. Tạo Token
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds
+               );
+
+            // 5. Lấy token dưới dạng string
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return jwt;
+        }
+
+        private bool VerifyJwt(string jwt)
+        {
+            try
+            {
+                // 1. taoj key để xác thực
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Secret key abc1123 npcent 111111"));
+                //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.Get("AppConfig.Secret"));
+
+                // 
+                SecurityToken stoken;
+
+                // 2. sử dụng phương thức validateToken
+                var jwtHandler = new JwtSecurityTokenHandler().ValidateToken(jwt, new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                }, out stoken);
+
+                var jwtToken = (JwtSecurityToken)stoken;
+                var userName = jwtToken.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+
+                Console.WriteLine(userName);
+                Console.WriteLine(jwtHandler.Claims.First());
+                Console.WriteLine(stoken);
+                return true;
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+            
         }
     }
 }
